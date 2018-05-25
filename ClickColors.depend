@@ -398,3 +398,11 @@
 	"begin_code.h"
 	"close_code.h"
 
+1527251064 source:f:\cours dvt informatique\clickcolors\main.cpp
+	<cstdlib>
+	<stdlib.h>
+	<time.h>
+	<SDL/SDL.h>
+	<SDL_image.h>
+	<SDL_ttf.h>
+

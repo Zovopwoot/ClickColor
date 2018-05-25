@@ -12,7 +12,7 @@
 
 void randomBlock (SDL_Surface *screen, SDL_Rect *blockPosition);
 void randomColor (SDL_Surface *screen, Uint32  *blockColor);
-void moveBlock (SDL_Surface *screen, SDL_Rect *blockPosition, int *score, bool *blockCatch, bool * done, SDL_Event *event,Uint32 blockColor);
+void moveBlock (SDL_Surface *screen, SDL_Rect *blockPosition, int *score, bool *blockCatch, bool * done, SDL_Event *event,Uint32 blockColor,int intervalTime);
 void Counter (int score,SDL_Surface *screen);
 void globalDisplay (SDL_Surface *screen, SDL_Rect *blockPosition, Uint32 blockColor,int score);
 void testDirection (SDL_Surface *screen, SDL_Rect*blockPosition, bool *Right, bool *Left, bool * Up, bool *Down);
@@ -35,6 +35,7 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
 
         Uint32 blockColor = 0 ;
         int score = 0;
+        int intervalTime = 50;
         bool done = false, blockCatch = false ;
         SDL_Event event;
 
@@ -46,8 +47,9 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
         globalDisplay(screen,&blockPosition,blockColor,score);
         blockCatch = false;
         wait(screen,&blockPosition,&score,&done,&blockCatch,&event);
-        moveBlock(screen,&blockPosition,&score,&blockCatch,&done,&event,blockColor);
+        moveBlock(screen,&blockPosition,&score,&blockCatch,&done,&event,blockColor,intervalTime);
         score++;
+        intervalTime --;
 
         }while (done == false);
 
@@ -68,9 +70,6 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
     void randomColor (SDL_Surface *screen,uint32_t *blockColor){
 
     int randomColor =   rand ()%(0 - 4)+1;
-
-    //*blockColor = SDL_MapRGB(screen->format,0,255,0);
-
     switch (randomColor){
 
     case 1:
@@ -90,9 +89,6 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
     *blockColor = SDL_MapRGB(screen->format,255,255,0);
     break;
 }
-
-
-
 }
 
     void globalDisplay (SDL_Surface *screen, SDL_Rect *blockPosition, Uint32 blockColor, int score){
@@ -122,15 +118,12 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
                 case SDL_MOUSEBUTTONDOWN:
                     if (((event->button.x >= blockPosition->x) & (event->button.x <= blockPosition->x + blockPosition->w)) & ((event->button.y>=blockPosition->y) & (event->button.y <= blockPosition->y + blockPosition->h)))
                     {
-                        //score ++;
                         *blockCatch = true ;
-
                         break;
                     }
                     else
                 break;
                 }
-
         }
 
     void testDirection (SDL_Surface *screen, SDL_Rect*blockPosition,bool *Right, bool *Left, bool * Up, bool *Down){
@@ -167,11 +160,10 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
         }
     }
 
-    void moveBlock (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *blockCatch, bool * done,SDL_Event *event,Uint32 blockColor){
+    void moveBlock (SDL_Surface *screen, SDL_Rect *blockPosition, int *score, bool *blockCatch, bool * done, SDL_Event *event, Uint32 blockColor, int intervalTime){
 
     int currentTime = 0;
     int pastTime = 0;
-    int intervalTime =  5;
     int randomMove = rand()%(0-5)+1;
     bool Right= true ,Left=true,Up=true,Down =true;
     bool invertDiagonale = false;
@@ -180,7 +172,7 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
             testDirection(screen,blockPosition,&Right,&Left,&Up,&Down);
             switch(randomMove){
 
-                case 1 : //move to the Right then invert
+                case 1 : //move to the Right
                 while (Right==true && *blockCatch == false && *done == false ){
                     currentTime =SDL_GetTicks();
                     if (currentTime-pastTime>intervalTime){
@@ -299,7 +291,7 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
                     testDirection(screen,blockPosition,&Right,&Left,&Up,&Down);
                     }
                 }
-                while(Up == true && Left == true && *blockCatch == false && *done == false){
+                while (Up == true && Left == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
                     if (currentTime-pastTime>intervalTime){
                      blockPosition->y --;
