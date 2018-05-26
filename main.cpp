@@ -13,10 +13,10 @@
 void randomBlock (SDL_Surface *screen, SDL_Rect *blockPosition);
 void randomColor (SDL_Surface *screen, Uint32  *blockColor);
 void moveBlock (SDL_Surface *screen, SDL_Rect *blockPosition, int *score, bool *blockCatch, bool * done, SDL_Event *event,Uint32 blockColor,int intervalTime);
-void Counter (int score,SDL_Surface *screen);
-void globalDisplay (SDL_Surface *screen, SDL_Rect *blockPosition, Uint32 blockColor,int score);
+void Counter (int score, SDL_Surface *screen);
+void globalDisplay (SDL_Surface *screen, SDL_Rect *blockPosition, Uint32 blockColor, int score);
 void testDirection (SDL_Surface *screen, SDL_Rect*blockPosition, bool *Right, bool *Left, bool * Up, bool *Down);
-void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,bool *blockCatch,SDL_Event *event);
+void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score, bool *done, bool *blockCatch, SDL_Event *event);
 
     int main ( int argc, char** argv ){
         // initialize and test SDL video
@@ -42,12 +42,12 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
 
         srand(time(NULL));
         do{
-        randomBlock(screen,&blockPosition);
-        randomColor(screen,&blockColor);
-        globalDisplay(screen,&blockPosition,blockColor,score);
+        randomBlock(screen, &blockPosition);
+        randomColor(screen, &blockColor);
+        globalDisplay(screen, &blockPosition, blockColor, score);
         blockCatch = false;
-        wait(screen,&blockPosition,&score,&done,&blockCatch,&event);
-        moveBlock(screen,&blockPosition,&score,&blockCatch,&done,&event,blockColor,intervalTime);
+        wait(screen, &blockPosition, &score, &done, &blockCatch, &event);
+        moveBlock(screen, &blockPosition, &score, &blockCatch, &done, &event, blockColor, intervalTime);
         score++;
         intervalTime --;
 
@@ -95,11 +95,11 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
 
         SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 255, 255, 255));
         SDL_FillRect(screen, blockPosition, blockColor);
-        Counter(score,screen);
+        Counter(score, screen);
         SDL_Flip(screen);
     }
 
-    void wait (SDL_Surface *screen,SDL_Rect *blockPosition, int *score,bool *done, bool *blockCatch,SDL_Event *event){
+    void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done, bool *blockCatch, SDL_Event *event){
 
                 SDL_PollEvent(event);
                  switch (event->type){
@@ -126,7 +126,7 @@ void wait (SDL_Surface *screen, SDL_Rect *blockPosition, int *score,bool *done,b
                 }
         }
 
-    void testDirection (SDL_Surface *screen, SDL_Rect*blockPosition,bool *Right, bool *Left, bool * Up, bool *Down){
+    void testDirection (SDL_Surface *screen, SDL_Rect*blockPosition, bool *Right, bool *Left, bool * Up, bool *Down){
     //move to Left Condition
         if (blockPosition->x >0){
             *Left = true;
