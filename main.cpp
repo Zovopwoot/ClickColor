@@ -9,15 +9,20 @@
     #include<SDL_ttf.h>
 
     //PROTOTYPES
-void displayscreenBorder (SDL_Surface *screen, int borderWidth, Uint32 borderColor);
-void blockPop(SDL_Surface* screen, SDL_Rect* block, Uint32* blockColor);
+void setScreenBorder (SDL_Surface* screen, int borderWidth, Uint32 borderColor);
+void blockPop (SDL_Surface* screen, SDL_Rect* block, Uint32* blockColor);
 void randomBlock (SDL_Surface *screen, SDL_Rect *block);
 Uint32 randomColor (SDL_Surface *screen);
 void moveBlock (SDL_Surface *screen, SDL_Rect *block, int *score, bool *blockCatch, bool * done, SDL_Event *event, Uint32 blockColor, Uint32 borderColor, int borderWidth, int intervalTime);
-void Counter (int score,SDL_Surface *screen,int borderWidth);
+void Counter (int score, SDL_Surface *screen, int borderWidth);
 void globalDisplay (SDL_Surface *screen, SDL_Rect *block, Uint32 blockColor, Uint32 borderColor, int borderWidth, int score);
-void testDirection (SDL_Surface *screen, SDL_Rect*block, bool *Right, bool *Left, bool * Up, bool *Down);
-void wait (SDL_Surface *screen, SDL_Rect *block, int *score, bool *done, bool *blockCatch,SDL_Event *event);
+void testDirection (SDL_Surface *screen, SDL_Rect*block, bool *right, bool *left, bool * up, bool *down);
+void moveToRight (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int *score, bool* done, SDL_Event *event, SDL_Surface *screen);
+void moveToLeft (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int *score, bool *done, SDL_Event *event, SDL_Surface *screen);
+void moveup (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int *score, bool *done, SDL_Event *event, SDL_Surface *screen);
+void moveDown (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int *score, bool *done, SDL_Event *event, SDL_Surface *screen);
+void diagonalMove(bool right, bool left, bool up, bool down, bool diagonalMove, bool* blockCatch, int currentTime, int* pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int* score, bool *done, SDL_Event* event, SDL_Surface* screen);
+void wait (SDL_Surface *screen, SDL_Rect *block, int *score, bool *done, bool *blockCatch, SDL_Event *event);
 
     int main ( int argc, char** argv ){
         // initialize and test SDL video
@@ -31,11 +36,9 @@ void wait (SDL_Surface *screen, SDL_Rect *block, int *score, bool *done, bool *b
             return 1;
         }
 
-        SDL_Surface* screen = SDL_SetVideoMode(640,480, 32,SDL_HWSURFACE|SDL_DOUBLEBUF);
-
+        SDL_Surface* screen = SDL_SetVideoMode(1600,900, 32,SDL_HWSURFACE|SDL_DOUBLEBUF);
         SDL_Rect block ;
         int borderWidth = 5 ;
-
         Uint32 blockColor = 0 ;
         Uint32 borderColor =0;
         int score = 0;
@@ -48,7 +51,6 @@ void wait (SDL_Surface *screen, SDL_Rect *block, int *score, bool *done, bool *b
 
         do{
         borderColor = randomColor(screen);
-        //displayscreenBorder(screen,borderWidth,&borderColor);
         blockPop(screen,&block,&blockColor);
         globalDisplay (screen, &block, blockColor,borderColor,borderWidth, score);
         blockCatch = false;
@@ -87,30 +89,30 @@ void wait (SDL_Surface *screen, SDL_Rect *block, int *score, bool *done, bool *b
 
     case 1:
         //red
-        resultColor = SDL_MapRGB(screen->format,255,0,0);
+        resultColor = SDL_MapRGB(screen->format, 255, 0, 0);
         break;
     case 2:
     //green
-        resultColor = SDL_MapRGB(screen->format,0,255,0);
+        resultColor = SDL_MapRGB(screen->format, 0, 255, 0);
         break;
     case 3 :
-    //blue
-    resultColor =SDL_MapRGB(screen->format,0,0,255);
+        //blue
+        resultColor =SDL_MapRGB(screen->format, 0, 0, 255);
     break;
     case 4 :
-    //yellow
-    resultColor = SDL_MapRGB(screen->format,255,255,0);
+        //yellow
+        resultColor = SDL_MapRGB(screen->format, 255, 255, 0);
     break;
 }
 return resultColor;
 }
 
-    void displayscreenBorder (SDL_Surface *screen, int borderWidth,Uint32 borderColor){
+    void setScreenBorder (SDL_Surface *screen, int borderWidth, Uint32 borderColor){
 
     SDL_Rect screenBorder [4];
     int i =0;
 
-    //LeftBorder
+    //leftBorder
     screenBorder[0].x =0 ;
     screenBorder[0].y =0 ;
     screenBorder[0].h =screen->h;
@@ -122,13 +124,13 @@ return resultColor;
     screenBorder[1].h = borderWidth;
     screenBorder[1] .w = (screen->w - (borderWidth*2));
 
-    //RightBorder
+    //rightBorder
     screenBorder[2].x = (screen->w - borderWidth) ;
     screenBorder[2].y = 0;
     screenBorder[2].h = screen->h;
     screenBorder[2].w = borderWidth;
 
-    //DownBorder
+    //downBorder
     screenBorder[3].x = 0;
     screenBorder[3].y = (screen->h - borderWidth);
     screenBorder[3].h = borderWidth;
@@ -142,7 +144,7 @@ return resultColor;
     void globalDisplay (SDL_Surface *screen, SDL_Rect *block, Uint32 blockColor,Uint32 borderColor,int borderWidth, int score){
 
         SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 128, 128, 192));
-        displayscreenBorder(screen,borderWidth,borderColor);
+        setScreenBorder(screen,borderWidth,borderColor);
         SDL_FillRect(screen, block, blockColor);
         Counter(score,screen,borderWidth);
         SDL_Flip(screen);
@@ -175,37 +177,37 @@ return resultColor;
                 }
         }
 
-    void testDirection (SDL_Surface *screen, SDL_Rect*block, bool *Right, bool *Left, bool * Up, bool *Down){
-    //move to Left Condition
-        if (block->x >0){
-            *Left = true;
+    void testDirection (SDL_Surface *screen, SDL_Rect*block, bool *right, bool *left, bool * up, bool *down,int borderWidth){
+    //move to left Condition
+        if (block->x >borderWidth){
+            *left = true;
             }
-        else if(block->x ==0){
-            *Left = false;
+        else if(block->x ==borderWidth){
+            *left = false;
         }
 
         //Move to right Condition
-        if (block->x < (screen->w - block->w)){
-            *Right =true;
+        if (block->x < (screen->w - block->w)-borderWidth){
+            *right =true;
         }
-        else if(block->x >=(screen->w - block->w)){
-            *Right =false ;
-        }
-
-        //Move Up condition
-        if (block->y > 0){
-            *Up =true;
-        }
-        else if (block->y == 0 ){
-            *Up = false ;
+        else if(block->x >=(screen->w - block->w)-borderWidth){
+            *right =false ;
         }
 
-        // Move Down Condition
-        if (block->y <(screen->h - block->h)){
-            *Down =true;
+        //Move up condition
+        if (block->y > borderWidth){
+            *up =true;
         }
-        else if (block->y >=(screen->h - block->h)){
-            *Down = false ;
+        else if (block->y == borderWidth ){
+            *up = false ;
+        }
+
+        // Move down Condition
+        if (block->y <(screen->h - block->h)-borderWidth){
+            *down =true;
+        }
+        else if (block->y >=(screen->h - block->h)-borderWidth){
+            *down = false ;
         }
     }
 
@@ -214,209 +216,229 @@ return resultColor;
     int currentTime = 0;
     int pastTime = 0;
     int randomMove = rand()%(0-5)+1;
-    bool Right= true ,Left=true,Up=true,Down =true;
+    bool right = true, left = true, up = true, down =true;
     bool invertDiagonale = false;
 
         do{
-            testDirection(screen,block,&Right,&Left,&Up,&Down);
+            testDirection(screen, block, &right, &left, &up, &down, borderWidth);
             switch(randomMove){
 
-                case 1 : //move to the Right
-                while (Right==true && *blockCatch == false && *done == false ){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
-                     block->x ++;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                    wait(screen,block,score,done,blockCatch,event);
-                    testDirection(screen,block,&Right,&Left,&Up,&Down);
-                    }
-                }   //then, move to the Left
-                while (Left==true && *blockCatch == false && *done == false){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
-                     block->x --;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                    wait(screen,block,score,done,blockCatch,event);
-                    testDirection(screen,block,&Right,&Left,&Up,&Down);
-                            }
-                }
+                case 1 ://move to the right
+                moveToRight (right,left,up,down,blockCatch,currentTime,&pastTime, intervalTime, block, blockColor, borderWidth, borderColor, score, done, event, screen);
                 break;
 
                 case 2 ://move down
-                while (Down==true && *blockCatch==false && *done == false){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
-                     block->y ++;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                     wait(screen,block,score,done,blockCatch,event);
-                      testDirection(screen,block,&Right,&Left,&Up,&Down);
-
-                    }
-                }       //then, move up
-                while (Up==true && *blockCatch==false && *done == false){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
-                     block->y --;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                     wait(screen,block,score,done,blockCatch,event);
-                      testDirection(screen,block,&Right,&Left,&Up,&Down);
-                            }
-                }
+                moveDown (right, left, up, down, blockCatch, currentTime, &pastTime, intervalTime, block, blockColor, borderWidth, borderColor, score, done, event, screen);
                 break;
 
-                case 3 : // move to the Left
-                while (Left==true && *blockCatch == false && *done== false){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime)
-                    {
-                     block->x --;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                     wait(screen,block,score,done,blockCatch,event);
-                      testDirection(screen,block,&Right,&Left,&Up,&Down);
-                    }
-                }
-                while (Right==true && *blockCatch == false && *done== false){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime)
-                    {
-                     block->x ++;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                     wait(screen,block,score,done,blockCatch,event);
-                      testDirection(screen,block,&Right,&Left,&Up,&Down);
-                    }
-                }
+                case 3 : // move to the left
+                moveToLeft (right, left, up, down, blockCatch, currentTime, &pastTime, intervalTime, block, blockColor, borderWidth, borderColor, score, done, event, screen);
                 break;
 
-                case 4 ://move Up
-                while (Up == true && *blockCatch == false && *done == false){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
-                     block->y --;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                     wait(screen,block,score,done,blockCatch,event);
-                      testDirection(screen,block,&Right,&Left,&Up,&Down);
-                    }
-                }
-                while (Down == true && *blockCatch == false && *done == false){
-                    currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
-                     block->y ++;
-                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
-                     wait(screen,block,score,done,blockCatch,event);
-                     testDirection(screen,block,&Right,&Left,&Up,&Down);
-                    }
-                }
+                case 4 ://move up
+                moveup (right, left, up, down, blockCatch, currentTime, &pastTime, intervalTime, block, blockColor, borderWidth, borderColor, score, done, event, screen);
                 break;
 
                 case 5: //Diagonal
-                if (invertDiagonale ==false){
-                while (Down == true && Right == true && *blockCatch == false && *done == false){
+                diagonalMove (right, left, up, down, invertDiagonale,blockCatch, currentTime, &pastTime, intervalTime, block, blockColor, borderWidth, borderColor, score, done, event, screen);
+                break;
+                }
+            } while (*blockCatch == false);
+
+}
+
+    void moveToRight (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int *score, bool *done, SDL_Event *event, SDL_Surface *screen){
+    while (right ==true && *blockCatch == false && *done == false ){
+                    currentTime = SDL_GetTicks();
+                    if (currentTime-*pastTime>intervalTime){
+                     block->x ++;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
+                     *pastTime= currentTime;
+                    wait(screen,block,score,done,blockCatch,event);
+                    testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                    }
+                }   //then, move to the left
+                while (left==true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
+                     block->x --;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
+                     *pastTime= currentTime;
+                    wait(screen,block,score,done,blockCatch,event);
+                    testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                            }
+                }
+}
+
+    void moveToLeft (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth,Uint32 borderColor, int *score, bool *done, SDL_Event *event, SDL_Surface *screen){
+    while (left==true && *blockCatch == false && *done== false){
+                    currentTime =SDL_GetTicks();
+                    if (currentTime-*pastTime>intervalTime)
+                    {
+                     block->x --;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth,*score);
+                     *pastTime= currentTime;
+                     wait(screen,block,score,done,blockCatch,event);
+                      testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                    }
+                }
+                while (right==true && *blockCatch == false && *done== false){
+                    currentTime =SDL_GetTicks();
+                    if (currentTime-*pastTime>intervalTime)
+                    {
+                     block->x ++;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
+                     *pastTime= currentTime;
+                     wait(screen,block,score,done,blockCatch,event);
+                      testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                    }
+                }
+}
+
+    void moveup (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth,Uint32 borderColor, int *score, bool *done,SDL_Event *event, SDL_Surface *screen){
+    while (up == true && *blockCatch == false && *done == false){
+                    currentTime =SDL_GetTicks();
+                    if (currentTime-*pastTime>intervalTime){
+                     block->y --;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth,*score);
+                     *pastTime= currentTime;
+                     wait(screen,block,score,done,blockCatch,event);
+                      testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                    }
+                }
+                while (down == true && *blockCatch == false && *done == false){
+                    currentTime =SDL_GetTicks();
+                    if (currentTime-*pastTime>intervalTime){
+                     block->y ++;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth,*score);
+                     *pastTime= currentTime;
+                     wait(screen,block,score,done,blockCatch,event);
+                     testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                    }
+                }
+}
+
+    void moveDown (bool right, bool left, bool up, bool down, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int *score, bool *done, SDL_Event *event, SDL_Surface *screen){
+        while (down==true && *blockCatch==false && *done == false){
+                currentTime =SDL_GetTicks();
+                if (currentTime-*pastTime>intervalTime){
+                     block->y ++;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
+                     *pastTime= currentTime;
+                     wait(screen,block,score,done,blockCatch,event);
+                      testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                    }
+                }       //then, move up
+            while (up==true && *blockCatch==false && *done == false){
+                currentTime =SDL_GetTicks();
+                if (currentTime-*pastTime>intervalTime){
+                     block->y --;
+                     globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
+                     *pastTime= currentTime;
+                     wait(screen,block,score,done,blockCatch,event);
+                      testDirection(screen,block,&right,&left,&up,&down,borderWidth);
+                            }
+                }
+    }
+
+    void diagonalMove (bool right, bool left, bool up, bool down, bool invertDiagonale, bool *blockCatch, int currentTime, int *pastTime, int intervalTime, SDL_Rect *block, Uint32 blockColor, int borderWidth, Uint32 borderColor, int *score, bool *done, SDL_Event *event, SDL_Surface *screen){
+    if (invertDiagonale ==false){
+                while (down == true && right == true && *blockCatch == false && *done == false){
+                    currentTime =SDL_GetTicks();
+                    if (currentTime-*pastTime>intervalTime){
                      block->y ++;
                      block->x++;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                     testDirection(screen,block,&Right,&Left,&Up,&Down);
+                     testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                     }
                 }
-                while (Up == true && Right == true && *blockCatch == false && *done == false){
+                while (up == true && right == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
                      block->y --;
                      block->x++;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                    testDirection(screen,block,&Right,&Left,&Up,&Down);
+                    testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                     }
                 }
-                while (Up == true && Left == true && *blockCatch == false && *done == false){
+                while (up == true && left == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
                      block->y --;
                      block->x--;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                     testDirection(screen,block,&Right,&Left,&Up,&Down);
+                     testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                     }
                 }
-                while (Down == true && Left == true && *blockCatch == false && *done == false){
+                while (down == true && left == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
                      block->y ++;
                      block->x--;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                      testDirection(screen,block,&Right,&Left,&Up,&Down);
+                      testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                     }
                 }
                 invertDiagonale=true;
                }
                else if (invertDiagonale ==true){
-                    while(Up == true && Left == true && *blockCatch == false && *done == false){
+                    while(up == true && left == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
                      block->y --;
                      block->x--;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                    testDirection(screen,block,&Right,&Left,&Up,&Down);
+                    testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                         }
                     }
-                    while (Up == true && Right == true && *blockCatch == false && *done == false){
+                    while (up == true && right == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
                      block->y --;
                      block->x++;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                     testDirection(screen,block,&Right,&Left,&Up,&Down);
+                     testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                     }
                 }
-                    while (Down == true && Right == true && *blockCatch == false && *done == false){
+                    while (down == true && right == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
                      block->y ++;
                      block->x++;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                     testDirection(screen,block,&Right,&Left,&Up,&Down);
+                     testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                     }
                 }
-                    while (Down == true && Left == true && *blockCatch == false && *done == false){
+                    while (down == true && left == true && *blockCatch == false && *done == false){
                     currentTime =SDL_GetTicks();
-                    if (currentTime-pastTime>intervalTime){
+                    if (currentTime-*pastTime>intervalTime){
                      block->y ++;
                      block->x--;
                      globalDisplay (screen, block, blockColor,borderColor,borderWidth, *score);
-                     pastTime= currentTime;
+                     *pastTime= currentTime;
                      wait(screen,block,score,done,blockCatch,event);
-                      testDirection(screen,block,&Right,&Left,&Up,&Down);
+                      testDirection(screen,block,&right,&left,&up,&down,borderWidth);
                     }
                 }
                     invertDiagonale =false;
                 }
-                break;
-                } //end switch
-            } while (*blockCatch == false);//end "do"
 }
 
-    void Counter (int score, SDL_Surface *screen,int borderWidth) {
+    void Counter (int score, SDL_Surface *screen,int borderWidth){
 
         SDL_Surface *text = NULL ;
         SDL_Surface *timer =NULL;
