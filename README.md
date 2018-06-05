@@ -1,4 +1,3 @@
-# ClickColor
 
 A small program for kids who want to play with mouse.
 
